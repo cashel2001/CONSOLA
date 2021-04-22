@@ -6,14 +6,14 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
-#define TAM_RX 45 // Definimos el numero maximo de caracteres en el array de recepcion de datos (4 TRAMAS DE 11 BYTES)
+#define TAM_RX 12 // Definimos el numero maximo de caracteres en el array de recepcion de datos (4 TRAMAS DE 11 BYTES)
 #define TAM_TX 6 // Definimos el numero maximo de bytes que vamos a enviar en nuestra trama de datos
 
 LiquidCrystal_I2C lcd( 0x27, 16, 2 ); // direccion de memoria 0x20 para proteus --- 0x27 para lcd fisico
 
 byte tramaRX[TAM_RX];
 byte tramaTX[TAM_TX] = { 0x02 , 0x1E , 0x04, 0x00, 0x03};
-
+byte tramaTX1[TAM_TX] = { 0x02 , 0x1E , 0x08, 0x00, 0x03};
 
 byte trama1[12]; // arrays que guardan los bytes recibidos, 11 es por los dos bytes del principio + byte de final + 8 bytes
 byte trama2[12];
@@ -51,129 +51,63 @@ void setup()
 
 }
 
-void loop() {
+void loop()
+{
 
  if(Serial.available())
   {
-       tramaRX[x] = Serial.read();
-       //Serial.print ("La posicion del byte en el array es:");Serial.println(x);
-       //Serial.print("El dato que he recibido en hexadecimal es:");Serial.print(tramaglobal[x]);Serial.println();
-       j++;
-       x++;
-
-////////////////////////LECTURA DE TRAMA TOTAL Y DIVISION EN 4 SUB-TRAMAS 
-
-       if ( x == 44) // si ha capturado las 4 tramas de bytes
-       {
-         Serial.print("TRAMA 1:");
-          for (int i = 0 ; i < 11 ; i++ )
+      tramaRX[j]=Serial.read();
+      j++;
+      
+      if ( j == 11 ) 
+      {
+         if (( tramaRX[0] == 2) && ( tramaRX[1] == 4 ) && ( tramaRX[10] == 3 ))
           {
-              trama1 [ i ] = tramaRX [ i ];
-              Serial.write ( trama1 [ i ] );
-          }
+           j = 0;
+           lcd.setCursor ( 0 , 0 );
+             for ( int i = 2 ; i < 10 ; i++ )
+             {
+             lcd.write(tramaRX[i]);
+            }
 
-          j=0;
-          Serial.println();
-          Serial.print ("TRAMA 2:");
-          for (int i = 11 ; i < 22 ; i++)
+           }
+
+          if (( tramaRX[0] == 2) && ( tramaRX[1] == 5 ) && ( tramaRX[10] == 3 ))
           {
-            
-            trama2 [ j ] = tramaRX [ i ] ;
-            Serial.write ( trama2 [ j ] );
-            j++;
-          }
+           j = 0;
+           lcd.setCursor ( 8 , 0 );
+             for ( int i = 2 ; i < 10 ; i++ )
+             {
+             lcd.write(tramaRX[i]);
+            }
 
-          j=0;
-          Serial.println();
-          Serial.print ("TRAMA 3:");
-             for (int i = 22 ; i < 33 ; i++)
+           }
+
+          if (( tramaRX[0] == 2) && ( tramaRX[1] == 6 ) && ( tramaRX[10] == 3 ))
           {
-          trama3 [ j ] = tramaRX [ i ] ;
-          Serial.write ( trama3 [ j ] );
-          j++;
-          }
+           j = 0;
+           lcd.setCursor ( 0 , 1 );
+             for ( int i = 2 ; i < 10 ; i++ )
+             {
+             lcd.write(tramaRX[i]);
+            }
 
-          Serial.println();
-          Serial.print ("TRAMA 4:");
-          j=0;
-            for (int i = 33 ; i < 45 ; i++)
+           }
+
+          if (( tramaRX[0] == 2) && ( tramaRX[1] == 7 ) && ( tramaRX[10] == 3 ))
           {
-            
-            trama4 [ j ] = tramaRX [ i ] ;
-            Serial.write ( trama4 [ j ] );
-            j++;
-          }
-        x=0;
-       }
+           j = 0;
+           lcd.setCursor ( 8 , 1 );
+             for ( int i = 2 ; i < 10 ; i++ )
+             {
+             lcd.write(tramaRX[i]);
+            }
 
-//////////////////////////////////COMPARACIONES DE TARMAS Y ESCRITURAS EN DISPLAY/////////////////
-
-       lcd.setCursor(0,0);
-       if (( trama1[0] == 2) && ( trama1[1] == 4 ) && ( trama1[10] == 3 )) //trama correcta
-       {
-         
-         for ( int i=2 ; i<10 ; i++ )
-           {
-             lcd.write(trama1[i]);
-             Serial.write(trama1 [i]);
-           
            }
-       }
-       else
-        {
-          lcd.print("        ");                  
-        }
+          
 
-       lcd.setCursor(8,0);
-       if (( trama2[0] == 2) && ( trama2[1] == 5 ) && ( trama2[10] == 3 )) //trama correcta
-       {
-         
-         for ( int i=2 ; i<10 ; i++ )
-           {
-             lcd.write(trama2[i]);
-             Serial.write(trama2 [i]);
-           
-           }
-       }
-       else
-        {
-          lcd.print("        ");                  
-        }
-        
-      lcd.setCursor(0,1);
-        if (( trama3[0] == 2) && ( trama3[1] == 6 ) && ( trama3[10] == 3 )) //trama correcta
-       {
-         
-         for ( int i=2 ; i<10 ; i++ )
-           {
-             lcd.write(trama3[i]);
-             Serial.write(trama3 [i]);
-           }
-        }
-        else
-        {
-          lcd.print("        ");                  
-        }
-
-
-        lcd.setCursor(8,1);
-        if (( trama4[0] == 2) && ( trama4[1] == 7 ) && ( trama4[10] == 3 )) //trama correcta
-       {
-         for ( int i=2 ; i<10 ; i++ )
-           {
-             lcd.write(trama4[i]);
-             Serial.write(trama4 [i]);
-           }
-        }
-
-        else
-        {
-          lcd.print("        ");                  
-        }
-        
-
-  }  
-
+      }
+  }
 
   ///////////////////////ENVIO INFORMACION DEL TECLADO//////////////////////////////////7
   byte key = keypad.getKey();
@@ -185,7 +119,7 @@ void loop() {
          if(keypad.key[i].stateChanged)
          {
            Serial.write(tramaTX,5);
-
+           Serial.write(tramaTX1,5);
          }
       }   
   }
