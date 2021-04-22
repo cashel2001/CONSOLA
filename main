@@ -1,56 +1,3 @@
-//02047072696d65726f73030205736567756e646f730302067465726365726f7303020763756172746f737303   el correcto
-//41427072696d65726f73434445736567756e646f734647487465726365726f73494a4b63756172746f73734c
-//ABprimerosCDEsegundosFGHtercerosIJKcuartossL
-
-#include <Arduino.h>
-#include <LiquidCrystal_I2C.h>
-#include <Keypad.h>
-
-#define TAM_RX 12 // Definimos el numero maximo de caracteres en el array de recepcion de datos (4 TRAMAS DE 11 BYTES)
-#define TAM_TX 6 // Definimos el numero maximo de bytes que vamos a enviar en nuestra trama de datos
-
-LiquidCrystal_I2C lcd( 0x27, 16, 2 ); // direccion de memoria 0x20 para proteus --- 0x27 para lcd fisico
-
-byte tramaRX[TAM_RX];
-byte tramaTX[TAM_TX] = { 0x02 , 0x1E , 0x04, 0x00, 0x03};
-byte tramaTX1[TAM_TX] = { 0x02 , 0x1E , 0x08, 0x00, 0x03};
-
-byte trama1[12]; // arrays que guardan los bytes recibidos, 11 es por los dos bytes del principio + byte de final + 8 bytes
-byte trama2[12];
-byte trama3[12];
-byte trama4[12];
-byte j = 0; // lleva el contador de posicion del array trama1
-byte x = 0; //lleva el contador de posicion del array tramaglobal
-
-
-const byte ROWS = 4; //four rows
-const byte COLS = 4; //four columns
-
-char keys[ROWS][COLS] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
-};
-
-
-
-byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {9, 8, 7, 6}; //connect to the column pinouts of the keypad
-
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
-
-void setup()
- {
-
-    Serial.begin(19200);
-    lcd.init();
-    lcd.backlight();
-    lcd.clear();
-  
-
-}
-
 void loop()
 {
 
@@ -59,69 +6,36 @@ void loop()
       tramaRX[j]=Serial.read();
       j++;
       
-      if ( j == 11 ) 
+      if ( j == 11 ) // COMPRUEBO QUE HE RECIBIDO LOS 11 BYTES DE CADA TRAMA
       {
-         if (( tramaRX[0] == 2) && ( tramaRX[1] == 4 ) && ( tramaRX[10] == 3 ))
+         if (( tramaRX[0] == 2) && ( tramaRX[10] == 3 )) // COMPRUEBO QUE HE RECIBIDO CORRECTAMENTE EL BIT DE INICIO Y FINAL
           {
            j = 0;
-           lcd.setCursor ( 0 , 0 );
-             for ( int i = 2 ; i < 10 ; i++ )
-             {
-             lcd.write(tramaRX[i]);
-            }
+           switch (tramaRX[1])
+           {
+              case 4: //CUADRANTE SUPERIOR IZD
+              lcd.setCursor ( 0 , 0 );
+              imprimirLCD(); 
+              break;
 
-           }
+              case 5: //CUADRANTE SUPERIOR DCHO
+              lcd.setCursor ( 8 , 0 );
+              imprimirLCD(); 
+              break;
 
-          if (( tramaRX[0] == 2) && ( tramaRX[1] == 5 ) && ( tramaRX[10] == 3 ))
-          {
-           j = 0;
-           lcd.setCursor ( 8 , 0 );
-             for ( int i = 2 ; i < 10 ; i++ )
-             {
-             lcd.write(tramaRX[i]);
-            }
+              case 6: //CUADRANTE INFERIOR IZD
+              lcd.setCursor ( 0 , 1 );
+              imprimirLCD(); 
+              break;
 
-           }
+              case 7: //CUADRANTE INFERIOR DCHO
+              lcd.setCursor ( 8 , 1 );
+              imprimirLCD(); 
+              break;
 
-          if (( tramaRX[0] == 2) && ( tramaRX[1] == 6 ) && ( tramaRX[10] == 3 ))
-          {
-           j = 0;
-           lcd.setCursor ( 0 , 1 );
-             for ( int i = 2 ; i < 10 ; i++ )
-             {
-             lcd.write(tramaRX[i]);
-            }
-
-           }
-
-          if (( tramaRX[0] == 2) && ( tramaRX[1] == 7 ) && ( tramaRX[10] == 3 ))
-          {
-           j = 0;
-           lcd.setCursor ( 8 , 1 );
-             for ( int i = 2 ; i < 10 ; i++ )
-             {
-             lcd.write(tramaRX[i]);
-            }
-
-           }
-          
-
+           }    
+          }
       }
-  }
-
-  ///////////////////////ENVIO INFORMACION DEL TECLADO//////////////////////////////////7
-  byte key = keypad.getKey();
-
-  if(keypad.getKey())
-  {
-      for (int i = 0 ; i < 2 ; i++)
-      {
-         if(keypad.key[i].stateChanged)
-         {
-           Serial.write(tramaTX,5);
-           Serial.write(tramaTX1,5);
-         }
-      }   
   }
 
 }
