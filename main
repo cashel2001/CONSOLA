@@ -1,32 +1,40 @@
 //02047072696d65726f73030205736567756e646f730302067465726365726f7303020763756172746f737303   el correcto
 //41427072696d65726f73434445736567756e646f734647487465726365726f73494a4b63756172746f73734c
-// ABprimerosCDEsegundosFGHtercerosIJKcuartossL
+//ABprimerosCDEsegundosFGHtercerosIJKcuartossL
+
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
-#define TAM 45 // Definimos el numero maximo de caracteres en el array de recepcion de datos (4 TRAMAS DE 11 BYTES)
+#define TAM_RX 45 // Definimos el numero maximo de caracteres en el array de recepcion de datos (4 TRAMAS DE 11 BYTES)
+#define TAM_TX 6 // Definimos el numero maximo de bytes que vamos a enviar en nuestra trama de datos
+
 LiquidCrystal_I2C lcd( 0x27, 16, 2 ); // direccion de memoria 0x20 para proteus --- 0x27 para lcd fisico
 
-byte ByteRead;
-byte variable =0;
-byte tramaglobal[TAM];
+byte tramaRX[TAM_RX];
+byte tramaTX[TAM_TX] = { 0x02 , 0x1E , 0x04, 0x00, 0x03};
+
+
 byte trama1[12]; // arrays que guardan los bytes recibidos, 11 es por los dos bytes del principio + byte de final + 8 bytes
 byte trama2[12];
 byte trama3[12];
 byte trama4[12];
 byte j = 0; // lleva el contador de posicion del array trama1
 byte x = 0; //lleva el contador de posicion del array tramaglobal
-bool flag = false;
+
 
 const byte ROWS = 4; //four rows
 const byte COLS = 4; //four columns
+
 char keys[ROWS][COLS] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
+
+
+
 byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
 byte colPins[COLS] = {9, 8, 7, 6}; //connect to the column pinouts of the keypad
 
@@ -35,11 +43,11 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 void setup()
  {
 
-    Serial.begin(9600);
+    Serial.begin(19200);
     lcd.init();
     lcd.backlight();
     lcd.clear();
-    //lcd.print("test rekoba");
+  
 
 }
 
@@ -47,11 +55,12 @@ void loop() {
 
  if(Serial.available())
   {
-       tramaglobal[x] = Serial.read();
-       Serial.print ("La posicion del byte en el array es:");Serial.println(x);
-       Serial.print("El dato que he recibido en hexadecimal es:");Serial.print(tramaglobal[x]);Serial.println();
+       tramaRX[x] = Serial.read();
+       //Serial.print ("La posicion del byte en el array es:");Serial.println(x);
+       //Serial.print("El dato que he recibido en hexadecimal es:");Serial.print(tramaglobal[x]);Serial.println();
        j++;
        x++;
+
 ////////////////////////LECTURA DE TRAMA TOTAL Y DIVISION EN 4 SUB-TRAMAS 
 
        if ( x == 44) // si ha capturado las 4 tramas de bytes
@@ -59,10 +68,8 @@ void loop() {
          Serial.print("TRAMA 1:");
           for (int i = 0 ; i < 11 ; i++ )
           {
-              trama1 [ i ] = tramaglobal [ i ];
+              trama1 [ i ] = tramaRX [ i ];
               Serial.write ( trama1 [ i ] );
-              
-
           }
 
           j=0;
@@ -71,7 +78,7 @@ void loop() {
           for (int i = 11 ; i < 22 ; i++)
           {
             
-            trama2 [ j ] = tramaglobal [ i ] ;
+            trama2 [ j ] = tramaRX [ i ] ;
             Serial.write ( trama2 [ j ] );
             j++;
           }
@@ -81,10 +88,9 @@ void loop() {
           Serial.print ("TRAMA 3:");
              for (int i = 22 ; i < 33 ; i++)
           {
-            
-            trama3 [ j ] = tramaglobal [ i ] ;
-            Serial.write ( trama3 [ j ] );
-            j++;
+          trama3 [ j ] = tramaRX [ i ] ;
+          Serial.write ( trama3 [ j ] );
+          j++;
           }
 
           Serial.println();
@@ -93,14 +99,15 @@ void loop() {
             for (int i = 33 ; i < 45 ; i++)
           {
             
-            trama4 [ j ] = tramaglobal [ i ] ;
+            trama4 [ j ] = tramaRX [ i ] ;
             Serial.write ( trama4 [ j ] );
             j++;
           }
         x=0;
        }
 
-//////////////////////////////////COMPARACIONES DE TARMAS/////////////////
+//////////////////////////////////COMPARACIONES DE TARMAS Y ESCRITURAS EN DISPLAY/////////////////
+
        lcd.setCursor(0,0);
        if (( trama1[0] == 2) && ( trama1[1] == 4 ) && ( trama1[10] == 3 )) //trama correcta
        {
@@ -111,7 +118,6 @@ void loop() {
              Serial.write(trama1 [i]);
            
            }
-
        }
        else
         {
@@ -133,6 +139,7 @@ void loop() {
         {
           lcd.print("        ");                  
         }
+        
       lcd.setCursor(0,1);
         if (( trama3[0] == 2) && ( trama3[1] == 6 ) && ( trama3[10] == 3 )) //trama correcta
        {
@@ -141,13 +148,13 @@ void loop() {
            {
              lcd.write(trama3[i]);
              Serial.write(trama3 [i]);
-           
            }
         }
         else
         {
           lcd.print("        ");                  
         }
+
 
         lcd.setCursor(8,1);
         if (( trama4[0] == 2) && ( trama4[1] == 7 ) && ( trama4[10] == 3 )) //trama correcta
@@ -156,7 +163,6 @@ void loop() {
            {
              lcd.write(trama4[i]);
              Serial.write(trama4 [i]);
-           
            }
         }
 
@@ -167,10 +173,21 @@ void loop() {
         
 
   }  
-  char key = keypad.getKey();
-  
-  if (key){
-    Serial.println(key);
+
+
+  ///////////////////////ENVIO INFORMACION DEL TECLADO//////////////////////////////////7
+  byte key = keypad.getKey();
+
+  if(keypad.getKey())
+  {
+      for (int i = 0 ; i < 2 ; i++)
+      {
+         if(keypad.key[i].stateChanged)
+         {
+           Serial.write(tramaTX,5);
+
+         }
+      }   
   }
- 
+
 }
