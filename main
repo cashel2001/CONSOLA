@@ -15,9 +15,15 @@ byte tramaRX[TAM_RX]; // arrays que guardan los bytes recibidos, 11 es por los d
 
 byte tramaTX[TAM_TX] = { 0x02 , 0x1E , 0x04, 0x00, 0x03};
 
+byte tramaVacia[TAM_TX] = { 0x02 , 0x1E , 0x00, 0x00, 0x03};
+
 byte j = 0; // lleva el contador de posicion del array trama1
 
-
+unsigned long time1 = 0;
+unsigned long timediferencia = 0;
+unsigned long time2 = 0;
+unsigned long timediferencia3 = 0;
+unsigned long time3 = 0;
 
 const byte ROWS = 4; //four rows
 const byte COLS = 4; //four columns
@@ -28,7 +34,13 @@ char keys[ROWS][COLS] = {
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
-
+/*
+byte keys[ROWS][COLS] = {
+  {0x01 , 0x02 , 0x03 ,0x1E},
+  {0x04 , 0x05 , 0x06 ,0x1E},
+  {0x07 , 0x08 , 0x09 ,0x1E},
+  {0x10 , 0x00 , 0x11 ,0x1E},
+};*/
 
 
 byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
@@ -44,7 +56,7 @@ void setup()
   lcd.init();
   lcd.backlight();
   lcd.clear();
-}
+ }
 
 //////////////////////// FUNCION IMPRIMIR LCD /////////////////////////////
 
@@ -54,6 +66,99 @@ void imprimirLCD()
     {
       lcd.write(tramaRX[i]);
     }
+}
+
+
+
+/////////////////////// ENVIO TRAMA CON INFORMACION ////////////////////////////
+
+void envioTrama (byte posicion1, byte posicion2)
+{
+  tramaTX[2] = posicion1;
+  tramaTX[3] = posicion2;
+
+    for (int i = 0 ; i < 5 ; i++)
+  {
+    Serial.write(tramaTX [ i ] );
+  }
+
+
+}
+
+////////////////////// ENVIO TRAMA VACIA ///////////////////////////////////
+void envioTramaVacia()
+{
+  for (int i = 0 ; i < 5 ; i++)
+  {
+    Serial.write(tramaVacia [ i ] );
+  }
+}
+/////////////////////// FUNCION LECTURA DE KEYPAD ///////////////////////
+
+void lecturaKeypad()
+{
+  char key = keypad.getKey();
+  
+  if (key){
+    //Serial.println(key);
+    switch (key)
+    {
+      case '1':
+      envioTrama( 0x04 , 0x00 );
+      break;
+
+      case '2':
+      envioTrama( 0x08 , 0x00 );
+      break;
+
+      case '3':
+      envioTrama( 0x10 , 0x00 );
+      break;
+
+      case '4':
+      envioTrama( 0x20 , 0x00 );
+      break;
+
+      case '5':
+      envioTrama( 0x40 , 0x00 );
+      break;
+
+      case '6':
+      envioTrama( 0x80 , 0x00 );
+      break;
+
+      case '7':
+      envioTrama( 0x00 , 0x04 );
+      break;
+
+      case '8':
+      envioTrama( 0x00 , 0x08 );
+      break;
+
+      case '9':
+      envioTrama( 0x00 , 0x10 );
+      break;
+
+      case '*':
+      envioTrama( 0x00 , 0x20 );
+      break; 
+
+      case '0':
+      envioTrama( 0x00 , 0x40 );
+      break;
+
+      case '#':
+      envioTrama( 0x00 , 0x80 );
+      break;     
+    }
+
+  }
+  else
+  {
+    envioTramaVacia();
+    delay (150);
+    
+  }
 }
 
 ///////////////////////// L O O P ////////////////////////////////////////
@@ -69,6 +174,7 @@ void loop()
       
       if ( j == 11 ) // COMPRUEBO QUE HE RECIBIDO LOS 11 BYTES DE CADA TRAMA
       {
+        time1 = millis();
          if (( tramaRX[0] == 2) && ( tramaRX[10] == 3 )) // COMPRUEBO QUE HE RECIBIDO CORRECTAMENTE EL BIT DE INICIO Y FINAL
           {
            j = 0;
@@ -77,11 +183,20 @@ void loop()
               case 4: //CUADRANTE SUPERIOR IZD
               lcd.setCursor ( 0 , 0 );
               imprimirLCD(); 
+              time2 = millis (); 
+              timediferencia = time2 - time1;
+              Serial.print("El tiempo transcurrido es de:");
+              Serial.println(timediferencia); 
+              
               break;
 
               case 5: //CUADRANTE SUPERIOR DCHO
               lcd.setCursor ( 8 , 0 );
               imprimirLCD(); 
+              time3 = millis (); 
+              timediferencia3 = time3 - time1;
+              Serial.print("El tiempo transcurrido es de:");
+              Serial.println(timediferencia3); 
               break;
 
               case 6: //CUADRANTE INFERIOR IZD
@@ -98,5 +213,6 @@ void loop()
       }
   }
 
+lecturaKeypad();
 
 } //loop
