@@ -160,7 +160,7 @@ void loop()
       
       if ( j == 11 ) // COMPRUEBO QUE HE RECIBIDO LOS 11 BYTES DE CADA TRAMA
       {
-        time1 = millis();
+       
          if (( tramaRX[0] == 2) && ( tramaRX[10] == 3 )) // COMPRUEBO QUE HE RECIBIDO CORRECTAMENTE EL BIT DE INICIO Y FINAL
           {
            j = 0;
